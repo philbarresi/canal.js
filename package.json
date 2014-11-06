@@ -1,0 +1,31 @@
+{
+  "name": "canal",
+  "version": "0.1.0",
+  "description": "A hybrid pub/sub javascript library.",
+  "main": "canal.min.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xueye/canal.git"
+  },
+  "keywords": [
+    "pub/sub",
+    "messaging"
+  ],
+  "author": "Phil Barresi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xueye/canal/issues"
+  },
+  "homepage": "https://github.com/xueye/canal",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-copy": "^0.7.0",
+    "grunt-contrib-uglify": "^0.6.0",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-typescript": "^0.4.1",
+    "typescript": "^1.1.0-1"
+  }
+}
