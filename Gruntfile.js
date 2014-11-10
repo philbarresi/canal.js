@@ -33,13 +33,13 @@ module.exports = function (grunt) {
                         filter: 'isFile',
                         flatten: true
                     }
-    ],
-            },
+    ]
+            }
         },
         watch: {
             src: {
                 files: ['src/*.ts'],
-                tasks: ['default'],
+                tasks: ['default']
             }
         }
     });
