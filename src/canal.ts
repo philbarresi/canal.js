@@ -58,6 +58,7 @@ module canal {
         private nodeIdCount:number = 0;
         private identifierToValidatorDict:Dict<Function> = {};
         private identifierToSubscriptionNodesDict:Dict<SubscriptionNode[]> = {};
+        private nodeIdToIdentifierKeyDict:Dict<string> = {};
 
         private getOrMakeValidator(identifier:Object):Function {
             if (Object(identifier) !== identifier) {
@@ -93,7 +94,7 @@ module canal {
             return currValidator;
         }
 
-        publish(identifier:Object, data?:any, then?:Function) {
+        publish(identifier:Object, data?:any, then?:Function):void {
             if (Object(identifier) !== identifier) {
                 throw new TypeError('You must publish with an object');
             }
@@ -112,8 +113,7 @@ module canal {
                     if (currSubscriptionList && currSubscriptionList.length > 0) {
                         for (var i = 0; i < currSubscriptionList.length; i++) {
                             var curr = currSubscriptionList[i];
-                            if (curr.callback)
-                            {
+                            if (curr.callback) {
                                 // let's make it "async-ish" in case someone has an expensive operation
                                 setTimeout(curr.callback.bind(curr, data), 0);
                             }
@@ -135,6 +135,8 @@ module canal {
             var key = canal.makeValidatorKey(identifier),
                 newNode = new SubscriptionNode(++this.nodeIdCount, this.getOrMakeValidator(identifier), callback);
 
+            this.nodeIdToIdentifierKeyDict[newNode.id] = key;
+
             if (!this.identifierToSubscriptionNodesDict[key]) {
                 this.identifierToSubscriptionNodesDict[key] = [];
             }
@@ -142,6 +144,24 @@ module canal {
             this.identifierToSubscriptionNodesDict[key].push(newNode);
 
             return newNode.id;
+        }
+
+        unsubscribe(nodeId:number):void {
+            if (!this.nodeIdToIdentifierKeyDict[nodeId]) throw new Error("Node id could not be found in this topic.");
+
+            var key = this.nodeIdToIdentifierKeyDict[nodeId];
+            var nodeList = this.identifierToSubscriptionNodesDict[key];
+
+            for (var i = 0, found = false, currNode; i < nodeList.length && !found; i++) {
+                currNode = nodeList[i];
+
+                if (currNode.id === nodeId) {
+                    delete currNode;
+                    nodeList.splice(i, 1);
+                }
+            }
+
+            delete this.nodeIdToIdentifierKeyDict[nodeId];
         }
 
         private reset():void {
@@ -153,12 +173,17 @@ module canal {
                 this.identifierToSubscriptionNodesDict[key].length = 0;
                 delete this.identifierToSubscriptionNodesDict[key];
             }
+
+            for (var key in this.nodeIdToIdentifierKeyDict) {
+                delete this.nodeIdToIdentifierKeyDict[key];
+            }
         }
 
         delete():void {
             this.reset();
             delete this.identifierToValidatorDict;
             delete this.identifierToSubscriptionNodesDict;
+            delete this.nodeIdToIdentifierKeyDict;
         }
 
         constructor(public name:string) {
@@ -194,12 +219,16 @@ module canal {
         return topicDict[topic];
     }
 
-    export function publish(identifier:Object, data?:any, then?:Function) {
+    export function publish(identifier:Object, data?:any, then?:Function):void {
         return root.publish(identifier, data, then);
     }
 
     export function subscribe(identifier:Object, callback:Function):number {
         return root.subscribe(identifier, callback);
+    }
+
+    export function unsubscribe(nodeId:number):void {
+        return root.unsubscribe(nodeId);
     }
 
     export function init() {

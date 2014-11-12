@@ -103,6 +103,29 @@ describe("Subscription Tests:", () => {
             });
         }).not.toThrow();
     });
+
+    it("Unsubscribes with a valid identifier", () => {
+        expect(() => {
+            var nodeId = canal.subscribe({id: 1619}, () => {
+            });
+            canal.unsubscribe(nodeId);
+        }).not.toThrow();
+    });
+
+    it("Throws when attempting to subscribe to an invalid nodeId", () => {
+        expect(() => {
+            var nodeId = canal.subscribe({id: 1619}, () => {
+                }),
+                wrongId = 10;
+
+            // if one day we introduce randomness to node ID, and we somehow have the ID of 10...
+            if (nodeId === wrongId) {
+                nodeId = 0;
+            }
+
+            canal.unsubscribe(wrongId);
+        }).toThrow();
+    });
 });
 
 describe("Publication Tests:", () => {
@@ -249,6 +272,23 @@ describe("PubSub Tests:", () => {
 
         setTimeout(() => {
             expect(receivedValue).toBe(testTransmissionValue);
+            done();
+        }, 100);
+    });
+
+    it("Expects a publication to not interact to a subscription that has been unsubscribed.", function (done) {
+        var identifier = {id: 16};
+
+        var nodeId = canal.subscribe(identifier, () => {
+            value++;
+        });
+
+        canal.unsubscribe(nodeId);
+
+        canal.publish(identifier);
+
+        setTimeout(() => {
+            expect(value).toBe(0);
             done();
         }, 100);
     });

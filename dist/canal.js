@@ -51,6 +51,7 @@ var canal;
             this.nodeIdCount = 0;
             this.identifierToValidatorDict = {};
             this.identifierToSubscriptionNodesDict = {};
+            this.nodeIdToIdentifierKeyDict = {};
         }
         Topic.prototype.getOrMakeValidator = function (identifier) {
             if (Object(identifier) !== identifier) {
@@ -93,8 +94,10 @@ var canal;
                     if (currSubscriptionList && currSubscriptionList.length > 0) {
                         for (var i = 0; i < currSubscriptionList.length; i++) {
                             var curr = currSubscriptionList[i];
-                            if (curr.callback)
+                            if (curr.callback) {
+                                // let's make it "async-ish" in case someone has an expensive operation
                                 setTimeout(curr.callback.bind(curr, data), 0);
+                            }
                         }
                     }
                 }
@@ -108,11 +111,26 @@ var canal;
                 throw new TypeError('You must subscribe with an object');
             }
             var key = canal.makeValidatorKey(identifier), newNode = new SubscriptionNode(++this.nodeIdCount, this.getOrMakeValidator(identifier), callback);
+            this.nodeIdToIdentifierKeyDict[newNode.id] = key;
             if (!this.identifierToSubscriptionNodesDict[key]) {
                 this.identifierToSubscriptionNodesDict[key] = [];
             }
             this.identifierToSubscriptionNodesDict[key].push(newNode);
             return newNode.id;
+        };
+        Topic.prototype.unsubscribe = function (nodeId) {
+            if (!this.nodeIdToIdentifierKeyDict[nodeId])
+                throw new Error("Node id could not be found in this topic.");
+            var key = this.nodeIdToIdentifierKeyDict[nodeId];
+            var nodeList = this.identifierToSubscriptionNodesDict[key];
+            for (var i = 0, found = false, currNode; i < nodeList.length && !found; i++) {
+                currNode = nodeList[i];
+                if (currNode.id === nodeId) {
+                    delete currNode;
+                    nodeList.splice(i, 1);
+                }
+            }
+            delete this.nodeIdToIdentifierKeyDict[nodeId];
         };
         Topic.prototype.reset = function () {
             for (var key in this.identifierToValidatorDict) {
@@ -122,11 +140,15 @@ var canal;
                 this.identifierToSubscriptionNodesDict[key].length = 0;
                 delete this.identifierToSubscriptionNodesDict[key];
             }
+            for (var key in this.nodeIdToIdentifierKeyDict) {
+                delete this.nodeIdToIdentifierKeyDict[key];
+            }
         };
         Topic.prototype.delete = function () {
             this.reset();
             delete this.identifierToValidatorDict;
             delete this.identifierToSubscriptionNodesDict;
+            delete this.nodeIdToIdentifierKeyDict;
         };
         return Topic;
     })();
@@ -164,6 +186,10 @@ var canal;
         return root.subscribe(identifier, callback);
     }
     canal.subscribe = subscribe;
+    function unsubscribe(nodeId) {
+        return root.unsubscribe(nodeId);
+    }
+    canal.unsubscribe = unsubscribe;
     function init() {
         for (var topic in topicDict) {
             if (!topicDict.hasOwnProperty(topic))
