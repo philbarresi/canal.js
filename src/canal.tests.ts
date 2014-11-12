@@ -170,10 +170,12 @@ describe("Topic Tests:", () => {
 });
 
 describe("PubSub Tests:", () => {
-    var value:number;
+    var value:number,
+        testTransmissionValue:string = "Space-Dye Vest";
 
     beforeEach(()=> {
         value = 0;
+        testTransmissionValue = "";
     });
 
     it("Expects a publication to interact to a subscription.", function (done) {
@@ -181,12 +183,11 @@ describe("PubSub Tests:", () => {
 
         canal.subscribe(identifier, () => {
             value++;
+            expect(value).toBe(1);
             done();
         });
 
         canal.publish(identifier, "foo");
-
-        expect(value).toBe(1);
     });
 
     it("Expects a publication to interact to 3 subscriptions, 2 times.", function (done) {
@@ -208,10 +209,12 @@ describe("PubSub Tests:", () => {
             value++;
         });
 
-        canal.publish(identifier, "foo", () => {
+        canal.publish(identifier, "foo");
+
+        setTimeout(() => {
             expect(value).toBe(6);
             done();
-        });
+        }, 100);
     });
 
     it("Expects a publication to not interact to a subscription on a different topic.", function (done) {
@@ -222,14 +225,31 @@ describe("PubSub Tests:", () => {
             value = 10;
         });
 
-
         testTopic.subscribe(identifier, () => {
             value += 100;
         });
 
-        canal.publish(identifier, "foo", () => {
+        canal.publish(identifier, "foo");
+
+        setTimeout(() => {
             expect(value).toBe(10);
             done();
+        }, 100);
+    });
+
+    it("Expects a publication to not interact to a subscription on a different topic.", function (done) {
+        var identifier = {id: 16},
+            receivedValue:string = "";
+
+        canal.subscribe(identifier, (testValue) => {
+            receivedValue = testValue;
         });
-    })
+
+        canal.publish(identifier, testTransmissionValue);
+
+        setTimeout(() => {
+            expect(receivedValue).toBe(testTransmissionValue);
+            done();
+        }, 100);
+    });
 });

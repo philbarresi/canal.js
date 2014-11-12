@@ -93,8 +93,8 @@ var canal;
                     if (currSubscriptionList && currSubscriptionList.length > 0) {
                         for (var i = 0; i < currSubscriptionList.length; i++) {
                             var curr = currSubscriptionList[i];
-                            var boundCurr = curr.callback.bind(curr);
-                            boundCurr(data);
+                            if (curr.callback)
+                                setTimeout(curr.callback.bind(curr, data), 0);
                         }
                     }
                 }
