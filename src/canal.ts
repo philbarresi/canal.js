@@ -55,9 +55,9 @@ module canal {
     }
 
     export class Topic {
-        private subscriptionArr:SubscriptionNode[] = [];
         private nodeIdCount:number = 0;
         private identifierToValidatorDict:Dict<Function> = {};
+        private identifierToSubscriptionNodesDict:Dict<SubscriptionNode[]> = {};
 
         private makeValidatorKey(identifier:Object):string {
             if (Object(identifier) !== identifier) {
@@ -110,13 +110,43 @@ module canal {
         }
 
         publish(identifier:Object, data?:any) {
+            if (Object(identifier) !== identifier) {
+                throw new TypeError('Identifiers must be valid objects');
+            }
 
+            // we check each key in the validator dictionary;
+            // if we have a successful match, we then go back
+            // and head to the identifier -> subscription dictionary
+            // and publish to each match
+            for (var key in this.identifierToValidatorDict) {
+                if (!this.identifierToValidatorDict.hasOwnProperty(key)) continue;
+
+                if (this.identifierToValidatorDict[key](identifier)) {
+                    // this identifier passes the validator test for a specific identifier
+                    var currSubscriptionList = this.identifierToSubscriptionNodesDict[key];
+
+                    if (currSubscriptionList && currSubscriptionList.length > 0) {
+                        for (var i = 0; i < currSubscriptionList.length; i++) {
+                            currSubscriptionList[i].callback(data);
+                        }
+                    }
+                }
+            }
         }
 
         subscribe(identifier:Object, callback:Function):number {
-            var newNode = new SubscriptionNode(++this.nodeIdCount, this.getOrMakeValidator(identifier), callback);
+            if (Object(identifier) !== identifier) {
+                throw new TypeError('Identifiers must be valid objects');
+            }
 
-            this.subscriptionArr.push(newNode);
+            var key = this.makeValidatorKey(identifier),
+                newNode = new SubscriptionNode(++this.nodeIdCount, this.getOrMakeValidator(identifier), callback);
+
+            if (!this.identifierToSubscriptionNodesDict[key]) {
+                this.identifierToSubscriptionNodesDict[key] = [];
+            }
+
+            this.identifierToSubscriptionNodesDict[key].push(newNode);
 
             return newNode.id;
         }
