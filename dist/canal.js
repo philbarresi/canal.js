@@ -48,9 +48,9 @@ var canal;
     var Topic = (function () {
         function Topic(topic) {
             this.topic = topic;
-            this.subscriptionArr = [];
             this.nodeIdCount = 0;
             this.identifierToValidatorDict = {};
+            this.identifierToSubscriptionNodesDict = {};
         }
         Topic.prototype.makeValidatorKey = function (identifier) {
             if (Object(identifier) !== identifier) {
@@ -92,10 +92,32 @@ var canal;
             return currValidator;
         };
         Topic.prototype.publish = function (identifier, data) {
+            if (Object(identifier) !== identifier) {
+                throw new TypeError('Identifiers must be valid objects');
+            }
+            for (var key in this.identifierToValidatorDict) {
+                if (!this.identifierToValidatorDict.hasOwnProperty(key))
+                    continue;
+                if (this.identifierToValidatorDict[key](identifier)) {
+                    // this identifier passes the validator test for a specific identifier
+                    var currSubscriptionList = this.identifierToSubscriptionNodesDict[key];
+                    if (currSubscriptionList && currSubscriptionList.length > 0) {
+                        for (var i = 0; i < currSubscriptionList.length; i++) {
+                            currSubscriptionList[i].callback(data);
+                        }
+                    }
+                }
+            }
         };
         Topic.prototype.subscribe = function (identifier, callback) {
-            var newNode = new SubscriptionNode(++this.nodeIdCount, this.getOrMakeValidator(identifier), callback);
-            this.subscriptionArr.push(newNode);
+            if (Object(identifier) !== identifier) {
+                throw new TypeError('Identifiers must be valid objects');
+            }
+            var key = this.makeValidatorKey(identifier), newNode = new SubscriptionNode(++this.nodeIdCount, this.getOrMakeValidator(identifier), callback);
+            if (!this.identifierToSubscriptionNodesDict[key]) {
+                this.identifierToSubscriptionNodesDict[key] = [];
+            }
+            this.identifierToSubscriptionNodesDict[key].push(newNode);
             return newNode.id;
         };
         return Topic;
