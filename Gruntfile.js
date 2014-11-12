@@ -12,6 +12,10 @@ module.exports = function (grunt) {
                     sourceMap: true,
                     declaration: true
                 }
+            },
+            tests: {
+                src: ['src/<%= pkg.name %>.tests.ts'],
+                dest: 'build/<%= pkg.name %>.tests.js'
             }
         },
         uglify: {
@@ -41,6 +45,11 @@ module.exports = function (grunt) {
                 files: ['src/*.ts'],
                 tasks: ['default']
             }
+        },
+        karma: {
+            unit: {
+                configFile: 'karma.conf.js'
+            }
         }
     });
 
@@ -48,6 +57,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-contrib-watch');
+    grunt.loadNpmTasks('grunt-karma');
 
-    grunt.registerTask('default', ['typescript', 'uglify', 'copy']);
+    grunt.registerTask('default', ['typescript', 'uglify', 'copy', 'karma']);
 };
