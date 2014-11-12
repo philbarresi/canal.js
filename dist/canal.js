@@ -52,22 +52,11 @@ var canal;
             this.identifierToValidatorDict = {};
             this.identifierToSubscriptionNodesDict = {};
         }
-        Topic.prototype.makeValidatorKey = function (identifier) {
-            if (Object(identifier) !== identifier) {
-                throw new TypeError('Cannot make a validator key without an object');
-            }
-            var keyArr = Object.keys(identifier), sortedArr = keyArr.sort(), mappedArr = sortedArr.map(function (key) {
-                var ret = {};
-                ret[key] = identifier[key];
-                return ret;
-            });
-            return JSON.stringify(mappedArr);
-        };
         Topic.prototype.getOrMakeValidator = function (identifier) {
             if (Object(identifier) !== identifier) {
                 throw new TypeError('Cannot get or make validator without an object');
             }
-            var key = this.makeValidatorKey(identifier), currValidator = this.identifierToValidatorDict[key];
+            var key = canal.makeValidatorKey(identifier), currValidator = this.identifierToValidatorDict[key];
             if (!currValidator) {
                 currValidator = function (other) {
                     if (Object(other) !== other) {
@@ -91,7 +80,7 @@ var canal;
             }
             return currValidator;
         };
-        Topic.prototype.publish = function (identifier, data) {
+        Topic.prototype.publish = function (identifier, data, then) {
             if (Object(identifier) !== identifier) {
                 throw new TypeError('You must publish with an object');
             }
@@ -103,22 +92,41 @@ var canal;
                     var currSubscriptionList = this.identifierToSubscriptionNodesDict[key];
                     if (currSubscriptionList && currSubscriptionList.length > 0) {
                         for (var i = 0; i < currSubscriptionList.length; i++) {
-                            currSubscriptionList[i].callback(data);
+                            var curr = currSubscriptionList[i];
+                            var boundCurr = curr.callback.bind(curr);
+                            boundCurr(data);
                         }
                     }
                 }
+            }
+            if (then && typeof then === "function") {
+                then();
             }
         };
         Topic.prototype.subscribe = function (identifier, callback) {
             if (Object(identifier) !== identifier) {
                 throw new TypeError('You must subscribe with an object');
             }
-            var key = this.makeValidatorKey(identifier), newNode = new SubscriptionNode(++this.nodeIdCount, this.getOrMakeValidator(identifier), callback);
+            var key = canal.makeValidatorKey(identifier), newNode = new SubscriptionNode(++this.nodeIdCount, this.getOrMakeValidator(identifier), callback);
             if (!this.identifierToSubscriptionNodesDict[key]) {
                 this.identifierToSubscriptionNodesDict[key] = [];
             }
             this.identifierToSubscriptionNodesDict[key].push(newNode);
             return newNode.id;
+        };
+        Topic.prototype.reset = function () {
+            for (var key in this.identifierToValidatorDict) {
+                delete this.identifierToValidatorDict[key];
+            }
+            for (var key in this.identifierToSubscriptionNodesDict) {
+                this.identifierToSubscriptionNodesDict[key].length = 0;
+                delete this.identifierToSubscriptionNodesDict[key];
+            }
+        };
+        Topic.prototype.delete = function () {
+            this.reset();
+            delete this.identifierToValidatorDict;
+            delete this.identifierToSubscriptionNodesDict;
         };
         return Topic;
     })();
@@ -126,21 +134,48 @@ var canal;
     var topicDict = {};
     var root = new Topic("root");
     topicDict["root"] = root;
+    function makeValidatorKey(identifier) {
+        if (Object(identifier) !== identifier) {
+            throw new TypeError('Cannot make a validator key without an object');
+        }
+        var keyArr = Object.keys(identifier), sortedArr = keyArr.sort(), mappedArr = sortedArr.map(function (key) {
+            var ret = {};
+            ret[key] = identifier[key];
+            return ret;
+        });
+        return JSON.stringify(mappedArr);
+    }
+    canal.makeValidatorKey = makeValidatorKey;
     function topic(topic) {
         if (typeof topic !== "string")
             throw new TypeError("You must provide a string to create or get a topic");
+        if (topic.length === 0)
+            throw new Error("Your topic name must not be null or empty.");
         if (!topicDict[topic])
             topicDict[topic] = new Topic(topic);
         return topicDict[topic];
     }
     canal.topic = topic;
-    function publish(identifier, data) {
-        return root.publish(identifier, data);
+    function publish(identifier, data, then) {
+        return root.publish(identifier, data, then);
     }
     canal.publish = publish;
     function subscribe(identifier, callback) {
         return root.subscribe(identifier, callback);
     }
     canal.subscribe = subscribe;
+    function init() {
+        for (var topic in topicDict) {
+            if (!topicDict.hasOwnProperty(topic))
+                continue;
+            topicDict[topic].delete();
+            delete topicDict[topic];
+        }
+        topicDict = {};
+        root = new Topic("root");
+        topicDict["root"] = root;
+    }
+    canal.init = init;
+    init();
 })(canal || (canal = {}));
 //# sourceMappingURL=canal.js.map

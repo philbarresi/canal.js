@@ -1,13 +1,98 @@
 ///<reference path="../build/canal.d.ts" />
 ///<reference path="jasmine.d.ts" />
 
+// PhantomJS doesn't have function.bind... very strange...
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind
+if (!Function.prototype.bind) {
+    Function.prototype.bind = function (oThis) {
+        if (typeof this !== 'function') {
+            // closest thing possible to the ECMAScript 5
+            // internal IsCallable function
+            throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
+        }
+
+        var aArgs = Array.prototype.slice.call(arguments, 1),
+            fToBind = this,
+            fNOP = function () {
+            },
+            fBound = function () {
+                return fToBind.apply(this instanceof fNOP && oThis
+                        ? this
+                        : oThis,
+                    aArgs.concat(Array.prototype.slice.call(arguments)));
+            };
+
+        fNOP.prototype = this.prototype;
+        fBound.prototype = new fNOP();
+
+        return fBound;
+    };
+}
+
 "use strict";
+afterEach(() => {
+    canal.init();
+});
+
+describe("Identifier Tests:", () => {
+    it("Throws when attempting to make a key out of a primitive", () => {
+        expect(() => {
+            canal.makeValidatorKey(1);
+        }).toThrow();
+
+        expect(() => {
+            canal.makeValidatorKey("foo");
+        }).toThrow();
+
+        expect(() => {
+            canal.makeValidatorKey(true);
+        }).toThrow();
+    });
+
+    it("Makes a key out of a a valid identifier", () => {
+        expect(() => {
+            canal.makeValidatorKey({id: 1619});
+        }).not.toThrow();
+    });
+
+    it("Properly formats a key", () => {
+        var identifier = {name: "Sasha", id: 1619, type: "tweet"};
+        var key = canal.makeValidatorKey(identifier);
+        expect(key).toEqual('[{"id":1619},{"name":"Sasha"},{"type":"tweet"}]');
+    });
+
+    it("Makes two identical identifiers with different orders into same key", () => {
+        var identifier1 = {id: 1619, type: "tweet"};
+        var key1 = canal.makeValidatorKey(identifier1);
+        var identifier2 = {type: "tweet", id: 1619};
+        var key2 = canal.makeValidatorKey(identifier2);
+
+        expect(key1).toEqual(key2);
+    });
+});
 
 describe("Subscription Tests:", () => {
+    it("Throws when attempting to subscribe to null", () => {
+        expect(() => {
+            canal.subscribe(null, () => {
+            });
+        }).toThrow();
 
-    it("Throws when attempting to subscribe with a string", () => {
+    });
+
+    it("Throws when attempting to subscribe with a primitive", () => {
         expect(() => {
             canal.subscribe("myString", () => {
+            });
+        }).toThrow();
+
+        expect(() => {
+            canal.subscribe(1, () => {
+            });
+        }).toThrow();
+
+        expect(() => {
+            canal.subscribe(true, () => {
             });
         }).toThrow();
     });
@@ -21,11 +106,23 @@ describe("Subscription Tests:", () => {
 });
 
 describe("Publication Tests:", () => {
-
-    it("Throws when attempting to publish with a string", () => {
+    it("Throws when attempting to publish to null", () => {
         expect(() => {
-            canal.publish("myString", () => {
-            });
+            canal.publish(null, null);
+        }).toThrow();
+    });
+
+    it("Throws when attempting to publish with a primitive", () => {
+        expect(() => {
+            canal.publish("myString", null);
+        }).toThrow();
+
+        expect(() => {
+            canal.publish(1, null);
+        }).toThrow();
+
+        expect(() => {
+            canal.publish(true, null);
         }).toThrow();
     });
 
@@ -37,17 +134,28 @@ describe("Publication Tests:", () => {
 });
 
 describe("Topic Tests:", () => {
+    it("Throws when attempting to create a topic with a null name", () => {
+        expect(() => {
+            var testTopic = canal.topic(null);
+        }).toThrow();
+    });
+
+    it("Throws when attempting to create a topic with an empty name", () => {
+        expect(() => {
+            var testTopic = canal.topic("");
+        }).toThrow();
+    });
+
     it("Expects a created topic to have the proper name", () => {
         var topicName = "CanalRocks";
-        var topic = canal.topic(topicName);
+        var testTopic = canal.topic(topicName);
 
-        expect(topic.name).toEqual(topicName)
+        expect(testTopic.name).toEqual(topicName)
     });
 
     it("Expects to throw when given a non-string name", () => {
         expect(() => {
-            (<any>canal).topic({foo: 1}, () => {
-            });
+            var testTopic = (<any>canal).topic({foo: 1});
         }).toThrow();
     });
 
@@ -59,4 +167,69 @@ describe("Topic Tests:", () => {
 
         expect(theyEqual).toEqual(true);
     });
+});
+
+describe("PubSub Tests:", () => {
+    var value:number;
+
+    beforeEach(()=> {
+        value = 0;
+    });
+
+    it("Expects a publication to interact to a subscription.", function (done) {
+        var identifier = {id: 16};
+
+        canal.subscribe(identifier, () => {
+            value++;
+            done();
+        });
+
+        canal.publish(identifier, "foo");
+
+        expect(value).toBe(1);
+    });
+
+    it("Expects a publication to interact to 3 subscriptions, 2 times.", function (done) {
+        var identifier = {id: 16};
+
+        canal.subscribe(identifier, () => {
+            value++;
+        });
+
+        canal.publish(identifier, "foo"); // value = 1
+
+        canal.subscribe(identifier, () => {
+            value++;
+        });
+
+        canal.publish(identifier, "foo"); // value = 3
+
+        canal.subscribe(identifier, () => {
+            value++;
+        });
+
+        canal.publish(identifier, "foo", () => {
+            expect(value).toBe(6);
+            done();
+        });
+    });
+
+    it("Expects a publication to not interact to a subscription on a different topic.", function (done) {
+        var identifier = {id: 16};
+        var testTopic = canal.topic("topic2");
+
+        canal.subscribe(identifier, () => {
+            value = 10;
+        });
+
+
+        testTopic.subscribe(identifier, () => {
+            value += 100;
+        });
+
+        canal.publish(identifier, "foo", () => {
+            expect(value).toBe(10);
+            done();
+        });
+    })
 });

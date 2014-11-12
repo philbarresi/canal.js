@@ -59,28 +59,12 @@ module canal {
         private identifierToValidatorDict:Dict<Function> = {};
         private identifierToSubscriptionNodesDict:Dict<SubscriptionNode[]> = {};
 
-        private makeValidatorKey(identifier:Object):string {
-            if (Object(identifier) !== identifier) {
-                throw new TypeError('Cannot make a validator key without an object');
-            }
-
-            var keyArr:string[] = Object.keys(identifier),
-                sortedArr = keyArr.sort(),
-                mappedArr = sortedArr.map((key) => {
-                    var ret = {};
-                    ret[key] = identifier[key];
-                    return ret;
-                });
-
-            return JSON.stringify(mappedArr);
-        }
-
         private getOrMakeValidator(identifier:Object):Function {
             if (Object(identifier) !== identifier) {
                 throw new TypeError('Cannot get or make validator without an object');
             }
 
-            var key = this.makeValidatorKey(identifier),
+            var key = canal.makeValidatorKey(identifier),
                 currValidator = this.identifierToValidatorDict[key];
 
             if (!currValidator) {
@@ -109,7 +93,7 @@ module canal {
             return currValidator;
         }
 
-        publish(identifier:Object, data?:any) {
+        publish(identifier:Object, data?:any, then?:Function) {
             if (Object(identifier) !== identifier) {
                 throw new TypeError('You must publish with an object');
             }
@@ -127,10 +111,16 @@ module canal {
 
                     if (currSubscriptionList && currSubscriptionList.length > 0) {
                         for (var i = 0; i < currSubscriptionList.length; i++) {
-                            currSubscriptionList[i].callback(data);
+                            var curr = currSubscriptionList[i];
+                            var boundCurr = curr.callback.bind(curr);
+                            boundCurr(data);
                         }
                     }
                 }
+            }
+
+            if (then && typeof then === "function") {
+                then();
             }
         }
 
@@ -139,7 +129,7 @@ module canal {
                 throw new TypeError('You must subscribe with an object');
             }
 
-            var key = this.makeValidatorKey(identifier),
+            var key = canal.makeValidatorKey(identifier),
                 newNode = new SubscriptionNode(++this.nodeIdCount, this.getOrMakeValidator(identifier), callback);
 
             if (!this.identifierToSubscriptionNodesDict[key]) {
@@ -151,6 +141,23 @@ module canal {
             return newNode.id;
         }
 
+        private reset():void {
+            for (var key in this.identifierToValidatorDict) {
+                delete this.identifierToValidatorDict[key];
+            }
+
+            for (var key in this.identifierToSubscriptionNodesDict) {
+                this.identifierToSubscriptionNodesDict[key].length = 0;
+                delete this.identifierToSubscriptionNodesDict[key];
+            }
+        }
+
+        delete():void {
+            this.reset();
+            delete this.identifierToValidatorDict;
+            delete this.identifierToSubscriptionNodesDict;
+        }
+
         constructor(public name:string) {
         }
     }
@@ -159,19 +166,51 @@ module canal {
     var root = new Topic("root");
     topicDict["root"] = root;
 
+    export function makeValidatorKey(identifier:Object):string {
+        if (Object(identifier) !== identifier) {
+            throw new TypeError('Cannot make a validator key without an object');
+        }
+
+        var keyArr:string[] = Object.keys(identifier),
+            sortedArr = keyArr.sort(),
+            mappedArr = sortedArr.map((key) => {
+                var ret = {};
+                ret[key] = identifier[key];
+                return ret;
+            });
+
+        return JSON.stringify(mappedArr);
+    }
+
     export function topic(topic:string):Topic {
         if (typeof topic !== "string") throw new TypeError("You must provide a string to create or get a topic");
+        if (topic.length === 0) throw new Error("Your topic name must not be null or empty.");
 
         if (!topicDict[topic]) topicDict[topic] = new Topic(topic);
 
         return topicDict[topic];
     }
 
-    export function publish(identifier:Object, data?:any) {
-        return root.publish(identifier, data);
+    export function publish(identifier:Object, data?:any, then?:Function) {
+        return root.publish(identifier, data, then);
     }
 
     export function subscribe(identifier:Object, callback:Function):number {
         return root.subscribe(identifier, callback);
     }
+
+    export function init() {
+        for (var topic in topicDict) {
+            if (!topicDict.hasOwnProperty(topic)) continue;
+
+            topicDict[topic].delete();
+            delete topicDict[topic];
+        }
+
+        topicDict = {};
+        root = new Topic("root");
+        topicDict["root"] = root;
+    }
+
+    init();
 }
