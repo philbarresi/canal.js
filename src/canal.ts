@@ -61,7 +61,7 @@ module canal {
 
         private makeValidatorKey(identifier:Object):string {
             if (Object(identifier) !== identifier) {
-                throw new TypeError('Identifiers must be valid objects');
+                throw new TypeError('Cannot make a validator key without an object');
             }
 
             var keyArr:string[] = Object.keys(identifier),
@@ -77,7 +77,7 @@ module canal {
 
         private getOrMakeValidator(identifier:Object):Function {
             if (Object(identifier) !== identifier) {
-                throw new TypeError('Identifiers must be valid objects');
+                throw new TypeError('Cannot get or make validator without an object');
             }
 
             var key = this.makeValidatorKey(identifier),
@@ -85,8 +85,8 @@ module canal {
 
             if (!currValidator) {
                 currValidator = (other:Object) => {
-                    if (Object(other) !== identifier) {
-                        throw new TypeError('Identifiers must be valid objects');
+                    if (Object(other) !== other) {
+                        throw new TypeError('You must pass a valid identifier to compare against a subscription.');
                     }
 
                     for (var key in identifier) {
@@ -111,7 +111,7 @@ module canal {
 
         publish(identifier:Object, data?:any) {
             if (Object(identifier) !== identifier) {
-                throw new TypeError('Identifiers must be valid objects');
+                throw new TypeError('You must publish with an object');
             }
 
             // we check each key in the validator dictionary;
@@ -136,7 +136,7 @@ module canal {
 
         subscribe(identifier:Object, callback:Function):number {
             if (Object(identifier) !== identifier) {
-                throw new TypeError('Identifiers must be valid objects');
+                throw new TypeError('You must subscribe with an object');
             }
 
             var key = this.makeValidatorKey(identifier),
@@ -151,14 +151,20 @@ module canal {
             return newNode.id;
         }
 
-        constructor(public topic:string) {
+        constructor(public name:string) {
         }
     }
 
+    var topicDict:Dict<Topic> = {};
     var root = new Topic("root");
+    topicDict["root"] = root;
 
     export function topic(topic:string):Topic {
-        return new Topic(topic);
+        if (typeof topic !== "string") throw new TypeError("You must provide a string to create or get a topic");
+
+        if (!topicDict[topic]) topicDict[topic] = new Topic(topic);
+
+        return topicDict[topic];
     }
 
     export function publish(identifier:Object, data?:any) {

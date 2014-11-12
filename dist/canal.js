@@ -46,15 +46,15 @@ var canal;
         return SubscriptionNode;
     })();
     var Topic = (function () {
-        function Topic(topic) {
-            this.topic = topic;
+        function Topic(name) {
+            this.name = name;
             this.nodeIdCount = 0;
             this.identifierToValidatorDict = {};
             this.identifierToSubscriptionNodesDict = {};
         }
         Topic.prototype.makeValidatorKey = function (identifier) {
             if (Object(identifier) !== identifier) {
-                throw new TypeError('Identifiers must be valid objects');
+                throw new TypeError('Cannot make a validator key without an object');
             }
             var keyArr = Object.keys(identifier), sortedArr = keyArr.sort(), mappedArr = sortedArr.map(function (key) {
                 var ret = {};
@@ -65,13 +65,13 @@ var canal;
         };
         Topic.prototype.getOrMakeValidator = function (identifier) {
             if (Object(identifier) !== identifier) {
-                throw new TypeError('Identifiers must be valid objects');
+                throw new TypeError('Cannot get or make validator without an object');
             }
             var key = this.makeValidatorKey(identifier), currValidator = this.identifierToValidatorDict[key];
             if (!currValidator) {
                 currValidator = function (other) {
-                    if (Object(other) !== identifier) {
-                        throw new TypeError('Identifiers must be valid objects');
+                    if (Object(other) !== other) {
+                        throw new TypeError('You must pass a valid identifier to compare against a subscription.');
                     }
                     for (var key in identifier) {
                         if (!identifier.hasOwnProperty(key))
@@ -93,7 +93,7 @@ var canal;
         };
         Topic.prototype.publish = function (identifier, data) {
             if (Object(identifier) !== identifier) {
-                throw new TypeError('Identifiers must be valid objects');
+                throw new TypeError('You must publish with an object');
             }
             for (var key in this.identifierToValidatorDict) {
                 if (!this.identifierToValidatorDict.hasOwnProperty(key))
@@ -111,7 +111,7 @@ var canal;
         };
         Topic.prototype.subscribe = function (identifier, callback) {
             if (Object(identifier) !== identifier) {
-                throw new TypeError('Identifiers must be valid objects');
+                throw new TypeError('You must subscribe with an object');
             }
             var key = this.makeValidatorKey(identifier), newNode = new SubscriptionNode(++this.nodeIdCount, this.getOrMakeValidator(identifier), callback);
             if (!this.identifierToSubscriptionNodesDict[key]) {
@@ -123,9 +123,15 @@ var canal;
         return Topic;
     })();
     canal.Topic = Topic;
+    var topicDict = {};
     var root = new Topic("root");
+    topicDict["root"] = root;
     function topic(topic) {
-        return new Topic(topic);
+        if (typeof topic !== "string")
+            throw new TypeError("You must provide a string to create or get a topic");
+        if (!topicDict[topic])
+            topicDict[topic] = new Topic(topic);
+        return topicDict[topic];
     }
     canal.topic = topic;
     function publish(identifier, data) {
