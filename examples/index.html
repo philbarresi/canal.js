@@ -15,14 +15,17 @@
             padding-top: 70px;
             padding-bottom: 30px;
         }
+
         .theme-dropdown .dropdown-menu {
             position: static;
             display: block;
             margin-bottom: 20px;
         }
+
         .theme-showcase > p > .btn {
             margin: 5px 0;
         }
+
         .theme-showcase .navbar .container {
             width: auto;
         }
@@ -30,70 +33,177 @@
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
 </head>
 
 <body>
-    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-        <div class="container">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="#">Bootstrap theme</a>
-            </div>
-            <div id="navbar" class="navbar-collapse collapse">
-                <ul class="nav navbar-nav">
-                    <li class="active"><a href="#">Home</a>
-                    </li>
-                    <li><a href="#about">About</a>
-                    </li>
-                    <li><a href="#contact">Contact</a>
-                    </li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <span class="caret"></span></a>
-                        <ul class="dropdown-menu" role="menu">
-                            <li><a href="#">Action</a>
-                            </li>
-                            <li><a href="#">Another action</a>
-                            </li>
-                            <li><a href="#">Something else here</a>
-                            </li>
-                            <li class="divider"></li>
-                            <li class="dropdown-header">Nav header</li>
-                            <li><a href="#">Separated link</a>
-                            </li>
-                            <li><a href="#">One more separated link</a>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-            <!--/.nav-collapse -->
-        </div>
-    </nav>
-
-    <div class="container theme-showcase" role="main">
-        <div class="jumbotron">
-            <h1>canal</h1>
-            <p>A hybrid pub/sub javascript library.</p>
-        </div>
-
-        <div class="page-header">
-            <h1>Buttons</h1>
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Canal</a>
         </div>
     </div>
+</nav>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
-    <script src="../dist/canal.min.js"></script>
-    <script>
-    </script>
+<div class="container theme-showcase" role="main">
+    <div class="jumbotron">
+        <h1>canal</h1>
+
+        <p>A hybrid pub/sub javascript library.</p>
+    </div>
+
+    <div class="page-header">
+        <h1>Events Demonstration</h1>
+    </div>
+    <div class="row">
+        <pre>
+    var emptyEvent = {};
+    var userTweeted = { type: "tweet", userId: 1619 };
+    var allTweets = { type: "tweet" };
+    var user = { userId: 1619 };
+    var userBlogged = { type: "blogged", userId: 1619 };
+    var userTweetedMe = { type: "tweet", userId: 1619, myId: 2112 };</pre>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Triggers</h2>
+            <hr/>
+        </div>
+        <div class="col-md-6">
+            <h2>Results</h2>
+            <hr/>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <h5>"Empty" Event</h5>
+<pre>
+$("#empty-event-trigger").click(function () {
+    canal.publish(emptyEvent, null);
+});
+</pre>
+            <p>
+                <button type="button" class="btn btn-default" id="empty-event-trigger">Trigger Empty Event</button>
+            </p>
+            <p>The empty event is a special case that will get triggered by any event at all.</p>
+        </div>
+        <div class="col-md-6">
+            <h5>Empty Events: <span id="empty-events-count">0</span></h5>
+<pre>
+canal.subscribe(emptyEvent, function () {
+    emptyEventsSpan.text(++emptyEventCount);
+});
+</pre>
+        </div>
+    </div>
+    <hr/>
+    <div class="row">
+        <div class="col-md-6">
+            <h5>All Tweets</h5>
+<pre>
+    canal.publish(allTweets, null);
+</pre>
+            <p>
+                <button type="button" class="btn btn-default" id="all-tweets-trigger">Trigger All Tweets Event</button>
+            </p>
+            <p>This publish will be consumed by <code>userTweeted</code>, <code>userTweeted</code>, and
+                <code>emptyEvent</code>.
+        </div>
+        <div class="col-md-6">
+            <h5>All Tweets Received: <span id="all-tweets-count">0</span></h5>
+<pre>
+canal.subscribe(allTweets, function () {
+    allTweetsSpan.text(++allTweetsCount);
+});
+</pre>
+            <p>This will be updated on <code>allTweets</code>, <code>userTweeted</code>, and <code>userTweetedMe</code>.
+            </p>
+        </div>
+    </div>
+    <hr/>
+    <div class="row">
+        <div class="col-md-6">
+            <h5>User Tweeted</h5>
+<pre>
+var messageCounter = 0;
+var userTweetedMessages = ["Hello, world!", "Goodnight, moon!", "Oh dear, I hope I used modulo properly..."];
+canal.publish(userTweeted, userTweetedMessages[messageCounter % userTweetedMessages.length], function() {messageCounter++;});
+</pre>
+            <p>
+                <button type="button" class="btn btn-default" id="user-tweeted-trigger">Trigger User Tweeted Event
+                </button>
+            </p>
+            <p>This button will publish to <code>allTweets</code> and <code>emptyEvent</code>.</p>
+
+            <p>Note the last parameter, a function, is a callback that will occur after the publication finishes.</p>
+        </div>
+        <div class="col-md-6">
+            <h5>User's Last Tweet: <span id="user-tweeted-message">0</span></h5>
+<pre>
+canal.subscribe(userTweeted, function (tweet) {
+    userTweetSpan.text(tweet);
+});
+</pre>
+        </div>
+    </div>
+    <hr/>
+
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+<script src="../dist/edge/canal.min.js"></script>
+<script>
+    var emptyEventCount = 0;
+    var allTweetsCount = 0;
+    var messageCounter = 0;
+    var userTweetedMessages = ["Hello, world!", "Goodnight, moon!", "Oh dear, I hope I used modulo properly..."];
+    var emptyEventsSpan = $("#empty-events-count");
+    var allTweetsSpan = $("#all-tweets-count");
+    var userTweetSpan = $("#user-tweeted-message");
+
+    var emptyEvent = {};
+    var userTweeted = {type: "tweet", userId: 1619};
+    var allTweets = {type: "tweet"};
+    var user = {userId: 1619};
+    var userBlogged = {type: "blogged", userId: 1619};
+    var userTweetedMe = {type: "tweet", userId: 1619, myId: 2112};
+
+    canal.subscribe(emptyEvent, function () {
+        emptyEventsSpan.text(++emptyEventCount);
+    });
+
+    canal.subscribe(allTweets, function () {
+        allTweetsSpan.text(++allTweetsCount);
+    });
+
+    canal.subscribe(userTweeted, function (tweet) {
+        userTweetSpan.text(tweet);
+    });
+
+    $("#user-tweeted-trigger").click(function () {
+        canal.publish(userTweeted, userTweetedMessages[messageCounter % userTweetedMessages.length], function () {
+            messageCounter++;
+        });
+    });
+
+    $("#empty-event-trigger").click(function () {
+        canal.publish(emptyEvent, null);
+    });
+
+    $("#all-tweets-trigger").click(function () {
+        canal.publish(allTweets, null);
+    });
+</script>
 </body>
 
 </html>
