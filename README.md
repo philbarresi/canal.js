@@ -1,4 +1,4 @@
-canal
+canal.js
 =====
 
 A hybrid pub/sub javascript library.
@@ -58,3 +58,28 @@ This will allow you to see metadata about that subscription or remove that subsc
 
 ## Good practices
 Remembering to dispose of subscriptions when you no longer care about prevents memory leakage.
+
+In the above subscription example:
+
+```
+	var logAnyTweet = canal.subscribe(allTweets, console.log);
+```
+
+We stop the id of that particular subscription in `logAnyTweet`.
+
+In order to unsubscribe, you send that id back to the topic with the unsubscribe call. IE:
+
+
+```
+	var logAnyTweet = canal.subscribe(allTweets, console.log);
+	canal.unsubscribe(logAnyTweet);
+```
+
+Or, with a topic
+
+```
+	var tweetTopic = canal.topic("Tweets");
+	var userTweetedMe = { type: "tweet", userId: 1619, myId: 2112 };
+	var userTweetedMeSubscription = tweetTopic.subscribe(userTweetedMe, console.log);
+	tweetTopic.unsubscribe(userTweetedMeSubscription);
+```
