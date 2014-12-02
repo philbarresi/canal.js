@@ -34,7 +34,7 @@ module.exports = function (grunt) {
                 files: [
                     {
                         expand: true,
-                        src: ['build/<%= pkg.name %>.js', 'build/<%= pkg.name %>.js.map', 'build/<%= pkg.name %>.min.js'],
+                        src: ['build/<%= pkg.name %>.js', 'build/<%= pkg.name %>.js.map', 'build/<%= pkg.name %>.d.ts', 'build/<%= pkg.name %>.min.js'],
                         dest: 'dist/',
                         filter: 'isFile',
                         flatten: true,
@@ -48,7 +48,7 @@ module.exports = function (grunt) {
                 files: [
                     {
                         expand: true,
-                        src: ['build/<%= pkg.name %>.js', 'build/<%= pkg.name %>.js.map', 'build/<%= pkg.name %>.min.js'],
+                        src: ['build/<%= pkg.name %>.js', 'build/<%= pkg.name %>.js.map', 'build/<%= pkg.name %>.d.ts', 'build/<%= pkg.name %>.min.js'],
                         dest: 'dist/',
                         filter: 'isFile',
                         flatten: true,
@@ -62,7 +62,7 @@ module.exports = function (grunt) {
                 files: [
                     {
                         expand: true,
-                        src: ['build/<%= pkg.name %>.js', 'build/<%= pkg.name %>.js.map', 'build/<%= pkg.name %>.min.js'],
+                        src: ['build/<%= pkg.name %>.js', 'build/<%= pkg.name %>.js.map', 'build/<%= pkg.name %>.d.ts', 'build/<%= pkg.name %>.min.js'],
                         dest: 'dist/',
                         filter: 'isFile',
                         flatten: true,
