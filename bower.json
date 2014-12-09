@@ -1,0 +1,26 @@
+{
+  "name": "canal.js",
+  "version": "0.1.0",
+  "homepage": "https://github.com/xueye/canal.js",
+  "authors": [
+    "Phil Barresi <me@philbarresi.com>"
+  ],
+  "description": "A hybrid pub/sub javascript library.",
+  "main": "dist/edge/canal.min.js",
+  "moduleType": [
+    "es6"
+  ],
+  "keywords": [
+    "pub/sub",
+    "bus",
+    "messaging"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

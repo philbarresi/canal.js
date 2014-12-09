@@ -6,6 +6,17 @@ A hybrid pub/sub javascript library.
 ## The Goal
 The goal of canal is to make a simple and accessible pub/sub library that can be easily dropped into any javascript application to allow for easy, efficient, organized, and readable event handling.
 
+## Installing
+### Via Bower
+```
+bower install canal.js
+```
+
+### Via Nuget
+```
+Install-Package canal.js
+```
+
 ## The Structure
 ### The Topic
 A topic can be explicity set to allow for organization of messages. For example, you may want to run strictly ui related events on a topic like `system-ui`.
