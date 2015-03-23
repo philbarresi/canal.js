@@ -23,8 +23,6 @@
     ".gitignore",
     "Gruntfile.js",
     "karma.conf.js",
-    "dist/*",
-    "dist/!edge/*",
     "node_modules",
     "bower_components",
     "test",

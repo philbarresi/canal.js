@@ -35,12 +35,9 @@ module.exports = function (grunt) {
                     {
                         expand: true,
                         src: ['build/<%= pkg.name %>.js', 'build/<%= pkg.name %>.js.map', 'build/<%= pkg.name %>.d.ts', 'build/<%= pkg.name %>.min.js'],
-                        dest: 'dist/',
+                        dest: 'dev/',
                         filter: 'isFile',
-                        flatten: true,
-                        rename: function (dest, src) {
-                            return dest + "/dev/" + src;
-                        }
+                        flatten: true
                     }
                 ]
             },
@@ -51,24 +48,7 @@ module.exports = function (grunt) {
                         src: ['build/<%= pkg.name %>.js', 'build/<%= pkg.name %>.js.map', 'build/<%= pkg.name %>.d.ts', 'build/<%= pkg.name %>.min.js'],
                         dest: 'dist/',
                         filter: 'isFile',
-                        flatten: true,
-                        rename: function (dest, src) {
-                            return dest + "/" + pkg.version + "/" + src;
-                        }
-                    }
-                ]
-            },
-            edge: {
-                files: [
-                    {
-                        expand: true,
-                        src: ['build/<%= pkg.name %>.js', 'build/<%= pkg.name %>.js.map', 'build/<%= pkg.name %>.d.ts', 'build/<%= pkg.name %>.min.js'],
-                        dest: 'dist/',
-                        filter: 'isFile',
-                        flatten: true,
-                        rename: function (dest, src) {
-                            return dest + "/edge/" + src;
-                        }
+                        flatten: true
                     }
                 ]
             }
@@ -94,5 +74,5 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-karma');
 
     grunt.registerTask('default', ['clean', 'typescript', 'uglify', 'copy:dev', 'karma']);
-    grunt.registerTask('dist', ['clean', 'typescript', 'uglify', 'copy:dev', 'karma', 'copy:dist', 'copy:edge']);
+    grunt.registerTask('dist', ['clean', 'typescript', 'uglify', 'copy:dev', 'karma', 'copy:dist']);
 };
