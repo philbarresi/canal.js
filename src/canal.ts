@@ -50,7 +50,7 @@ module canal {
     }
 
     class SubscriptionNode {
-        constructor(public id:number, public validator:Function, public callback:Function) {
+        constructor(public id:number, public validator:Function, public callback:(data:any, subscriptionId?:number) => any, public singleUse:boolean = false) {
         }
     }
 
@@ -99,6 +99,8 @@ module canal {
                 throw new TypeError('You must publish with an object');
             }
 
+            var self = this;
+
             // we check each key in the validator dictionary;
             // if we have a successful match, we then go back
             // and head to the identifier -> subscription dictionary
@@ -114,8 +116,11 @@ module canal {
                         for (var i = 0; i < currSubscriptionList.length; i++) {
                             var curr = currSubscriptionList[i];
                             if (curr.callback) {
-                                // let's make it "async-ish" in case someone has an expensive operation
-                                setTimeout(curr.callback.bind(curr, data), 0);
+                                curr.callback(data, curr.id);
+
+                                if (curr.singleUse) {
+                                    self.unsubscribe(curr.id);
+                                }
                             }
                         }
                     }
@@ -127,13 +132,13 @@ module canal {
             }
         }
 
-        subscribe(identifier:Object, callback:Function):number {
+        subscribe(identifier:Object, callback:(data:any, subscriptionId?:number) => any, singleUse:boolean = false):number {
             if (Object(identifier) !== identifier) {
                 throw new TypeError('You must subscribe with an object');
             }
 
             var key = canal.makeValidatorKey(identifier),
-                newNode = new SubscriptionNode(++this.nodeIdCount, this.getOrMakeValidator(identifier), callback);
+                newNode = new SubscriptionNode(++this.nodeIdCount, this.getOrMakeValidator(identifier), callback, singleUse);
 
             this.nodeIdToIdentifierKeyDict[newNode.id] = key;
 
@@ -223,8 +228,8 @@ module canal {
         return root.publish(identifier, data, then);
     }
 
-    export function subscribe(identifier:Object, callback:Function):number {
-        return root.subscribe(identifier, callback);
+    export function subscribe(identifier:Object, callback:(data:any, subscriptionId?:number) => any, singleUse:boolean = false):number {
+        return root.subscribe(identifier, callback, singleUse);
     }
 
     export function unsubscribe(nodeId:number):void {

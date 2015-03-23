@@ -292,4 +292,20 @@ describe("PubSub Tests:", () => {
             done();
         }, 100);
     });
+
+    it("Expects a publication to not interact to a subscription that has been unsubscribed automatically.", function (done) {
+        var identifier = {id: 16};
+
+        canal.subscribe(identifier, () => {
+            value++;
+        }, true);
+
+        canal.publish(identifier);
+        canal.publish(identifier);
+
+        setTimeout(() => {
+            expect(value).toBe(1);
+            done();
+        }, 100);
+    });
 });

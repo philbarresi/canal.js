@@ -1,6 +1,6 @@
 {
   "name": "canal",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A hybrid pub/sub javascript library.",
   "main": "canal.min.js",
   "scripts": {

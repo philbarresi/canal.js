@@ -38,10 +38,12 @@ if (!Object.keys) {
 var canal;
 (function (canal) {
     var SubscriptionNode = (function () {
-        function SubscriptionNode(id, validator, callback) {
+        function SubscriptionNode(id, validator, callback, singleUse) {
+            if (singleUse === void 0) { singleUse = false; }
             this.id = id;
             this.validator = validator;
             this.callback = callback;
+            this.singleUse = singleUse;
         }
         return SubscriptionNode;
     })();
@@ -85,6 +87,7 @@ var canal;
             if (Object(identifier) !== identifier) {
                 throw new TypeError('You must publish with an object');
             }
+            var self = this;
             for (var key in this.identifierToValidatorDict) {
                 if (!this.identifierToValidatorDict.hasOwnProperty(key))
                     continue;
@@ -95,8 +98,10 @@ var canal;
                         for (var i = 0; i < currSubscriptionList.length; i++) {
                             var curr = currSubscriptionList[i];
                             if (curr.callback) {
-                                // let's make it "async-ish" in case someone has an expensive operation
-                                setTimeout(curr.callback.bind(curr, data), 0);
+                                curr.callback(data, curr.id);
+                                if (curr.singleUse) {
+                                    self.unsubscribe(curr.id);
+                                }
                             }
                         }
                     }
@@ -106,11 +111,12 @@ var canal;
                 then();
             }
         };
-        Topic.prototype.subscribe = function (identifier, callback) {
+        Topic.prototype.subscribe = function (identifier, callback, singleUse) {
+            if (singleUse === void 0) { singleUse = false; }
             if (Object(identifier) !== identifier) {
                 throw new TypeError('You must subscribe with an object');
             }
-            var key = canal.makeValidatorKey(identifier), newNode = new SubscriptionNode(++this.nodeIdCount, this.getOrMakeValidator(identifier), callback);
+            var key = canal.makeValidatorKey(identifier), newNode = new SubscriptionNode(++this.nodeIdCount, this.getOrMakeValidator(identifier), callback, singleUse);
             this.nodeIdToIdentifierKeyDict[newNode.id] = key;
             if (!this.identifierToSubscriptionNodesDict[key]) {
                 this.identifierToSubscriptionNodesDict[key] = [];
@@ -182,8 +188,9 @@ var canal;
         return root.publish(identifier, data, then);
     }
     canal.publish = publish;
-    function subscribe(identifier, callback) {
-        return root.subscribe(identifier, callback);
+    function subscribe(identifier, callback, singleUse) {
+        if (singleUse === void 0) { singleUse = false; }
+        return root.subscribe(identifier, callback, singleUse);
     }
     canal.subscribe = subscribe;
     function unsubscribe(nodeId) {
