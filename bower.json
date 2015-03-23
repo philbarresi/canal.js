@@ -1,6 +1,6 @@
 {
   "name": "canal.js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "homepage": "https://github.com/xueye/canal.js",
   "authors": [
     "Phil Barresi <me@philbarresi.com>"
@@ -18,6 +18,13 @@
   "license": "MIT",
   "ignore": [
     "**/.*",
+    "examples",
+    "src",
+    ".gitignore",
+    "Gruntfile.js",
+    "karma.conf.js",
+    "dist/dev",
+    "dist/0.1.0",
     "node_modules",
     "bower_components",
     "test",
